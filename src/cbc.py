@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 import argparse
 import os
+import math
 
 
 # returns a DirInfo list with all subfolders of dirpath
@@ -34,6 +35,24 @@ def create_badges(svgpath, csvpath, outpath, ncolumns):
     # create the badge svg pages
     replace_svg(aList, svgData, outpath, 'badges')
 
+    # create reverse side
+    if ncolumns > 0:
+
+        # shuffle the attendee list to match recto/verso
+        rd = list(aList.data)
+        for cIdx in range(0, len(aList.data)):
+
+            cRow = math.floor(cIdx/ncolumns)
+            nIdx = cRow*ncolumns + (ncolumns-1) - cIdx % ncolumns
+
+            # permutate for short-side reverse printing
+            rd[nIdx] = aList.data[cIdx]
+
+        rList = aList
+        rList.data = rd
+
+        replace_svg(rList, svgData, outpath, 'badges-rv')
+
 
 def replace_svg(aList, svgData, outpath, filename):
 
@@ -60,9 +79,8 @@ def replace_svg(aList, svgData, outpath, filename):
             names = val.split(',')
             if kw == '#name' and len(names) == 2:
                 val = names[1].strip() + " " + names[0].strip()
-            # elif kw == '#company':
-            #     continue
 
+            # now replace the keyword with the current field value
             nPage = cPage.replace(kw, val, 1)
 
             # is the page full already?
@@ -81,6 +99,7 @@ def replace_svg(aList, svgData, outpath, filename):
 
             cPage = nPage
 
+    # save last page if it's still open
     if cPage != svgData:
         op = os.path.join(outpath, filename + "-" +
                           str(pageIdx) + ".svg")

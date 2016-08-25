@@ -12,6 +12,16 @@ template using names from a ``*.csv`` file.
     encoded files)
 
 ## Running the
+- Install ``Python 3.4``
+- Open a command line and cd to the ``src``
+- Call the CBC
+```
+cbc.py ..\data\template.svg ..\data\attendees.csv ..\badges --back 3
+```
+
+## Printing on Both Sides
+- Choose ``--back`` with the number of columns
+- When printing, choose ``Flip on Short Edge``
 
 ## Using ACM's RegOnline
 - Export attendee list from ``RegOnline`` as ``xls``
