@@ -1,11 +1,10 @@
 #!/usr/local/bin/python
 import argparse
-import codecs
+import os
 
 
 # returns a DirInfo list with all subfolders of dirpath
 def create_badges(svgpath, csvpath, outpath, ncolumns):
-    import os
 
     svgTemplate = load_file(svgpath)
     csvFile = load_file(csvpath)
@@ -17,15 +16,100 @@ def create_badges(svgpath, csvpath, outpath, ncolumns):
     outpath = os.path.normpath(outpath)
 
     if not os.path.exists(outpath):
-        print("Sorry, " + outpath + " is not valid...")
+        print("Sorry, " + outpath + " is not a valid output folder...")
         return None
 
     aList = read_csv(csvFile)
 
-    print(aList.keywords)
-    print(aList.data)
+    if len(aList.data) == 0:
+        print("empty attendee list...")
+        return
 
-    print("seems to be working...")
+    # read svg
+    svgData = svgTemplate.read()
+
+    if not check_keywords(svgData, aList.keywords):
+        return
+
+    # create the badge svg pages
+    replace_svg(aList, svgData, outpath, 'badges')
+
+
+def replace_svg(aList, svgData, outpath, filename):
+
+    pageIdx = 0
+    cPage = svgData
+
+    for aIdx in range(0, len(aList.data)):
+        attendee = aList.data[aIdx]
+
+        for idx in range(0, len(aList.keywords)):
+            kw = aList.keywords[idx]
+
+            # ignore empty keywords
+            if kw == '':
+                continue
+            if idx >= len(attendee):
+                print("could not find entry for " + kw +
+                      " in line " + str(aIdx) + ": " + str(attendee))
+                continue
+
+            val = attendee[idx]
+
+            # normalize names
+            names = val.split(',')
+            if kw == '#name' and len(names) == 2:
+                val = names[1].strip() + " " + names[0].strip()
+            # elif kw == '#company':
+            #     continue
+
+            nPage = cPage.replace(kw, val, 1)
+
+            # is the page full already?
+            if nPage == cPage:
+                op = os.path.join(outpath, filename + "-" +
+                                  str(pageIdx) + ".svg")
+                pageIdx += 1
+
+                save_svg(op, cPage)
+
+                # get fresh svg & replace current string again
+                cPage = svgData
+                nPage = cPage.replace(kw, val, 1)
+
+                print(op + " saved...")
+
+            cPage = nPage
+
+    if cPage != svgData:
+        op = os.path.join(outpath, filename + "-" +
+                          str(pageIdx) + ".svg")
+        save_svg(op, cPage)
+        print(op + " saved...")
+
+
+def check_keywords(svgData, keywords):
+
+    if len(keywords) == 0:
+        print('ERROR: keywords are empty...')
+        print("""they should be in the first line of the csv file
+              (e.g. #name; #company)""")
+        return False
+
+    # check keyword format
+    for idx in range(0, len(keywords)):
+        kw = keywords[idx]
+        if not kw == '' and not kw.startswith('#'):
+            print("illegal keyword: " + kw)
+            print("NOTE: all keywords must start with # (e.g. #name)")
+            return False
+        if not kw == '' and kw not in svgData:
+            print("could not find " + kw + " in the svg template...")
+            print("\t...ignoring (NOTE: it's case sensitive)")
+            # remove illegal keywords
+            keywords[idx] = ''
+
+    return True
 
 
 def read_csv(csvFile):
@@ -49,9 +133,23 @@ def load_file(filepath):
     return None
 
 
+def save_svg(filepath, svgData):
+    import sys
+
+    try:
+        outFile = open(filepath, 'w', encoding='utf-8')
+        outFile.write(svgData)
+        outFile.close()
+    except:
+        print("Sorry, I could not save " + filepath)
+        print(sys.exc_info()[0])
+
+
 class CsvData(object):
     def __init__(self, keywords, data):
-        self.keywords = keywords
+
+        # get keywords (flat)
+        self.keywords = [val for sublist in keywords for val in sublist]
         self.data = data
 
 if __name__ == "__main__":

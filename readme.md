@@ -7,6 +7,11 @@ template using names from a ``*.csv`` file.
 - Create a attendee list similar to ``attendees.csv``
   - Name your column headers (1st row) w.r.t the template fields
   - Field names must start with # (e.g. ``#name``; ``#company``)
+- NOTE: all files _must_ be ``UTF-8`` encoded
+  - check them using notepad++ (e.g. Illustrator & Excel do not produce UTF-8
+    encoded files)
+
+## Running the
 
 ## Using ACM's RegOnline
 - Export attendee list from ``RegOnline`` as ``xls``
