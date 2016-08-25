@@ -38,12 +38,20 @@ def create_badges(svgpath, csvpath, outpath, ncolumns):
     # create reverse side
     if ncolumns > 0:
 
+        # fill up the last row
+        lr = len(aList.data) % ncolumns + 1
+        for cIdx in range(0, lr):
+            aList.data.append(aList.data[0])
+
         # shuffle the attendee list to match recto/verso
         rd = list(aList.data)
         for cIdx in range(0, len(aList.data)):
 
             cRow = math.floor(cIdx/ncolumns)
             nIdx = cRow*ncolumns + (ncolumns-1) - cIdx % ncolumns
+
+            if nIdx >= len(rd):
+                continue
 
             # permutate for short-side reverse printing
             rd[nIdx] = aList.data[cIdx]
