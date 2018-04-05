@@ -88,6 +88,8 @@ def replace_svg(aList, svgData, outpath, filename):
             if kw == '#name' and len(names) == 2:
                 val = names[1].strip() + " " + names[0].strip()
 
+            val = normalize(val)
+
             # now replace the keyword with the current field value
             nPage = cPage.replace(kw, val, 1)
 
@@ -146,6 +148,13 @@ def read_csv(csvFile):
     reader = list(reader)
 
     return CsvData(reader[:1], reader[1:])
+
+def normalize(str):
+
+    # replace illegal characters (XML)
+    str = str.replace('&', '&amp;');
+
+    return str
 
 
 # loads files, returns NULL if the file could not be loaded
