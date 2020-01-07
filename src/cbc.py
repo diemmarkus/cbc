@@ -5,7 +5,7 @@ import math
 
 
 # returns a DirInfo list with all subfolders of dirpath
-def create_badges(svgpath, csvpath, outpath, ncolumns):
+def create_badges(svgpath, csvpath, outpath, ncolumns=0, pdf=False):
 
     svgTemplate = load_file(svgpath)
     csvFile = load_file(csvpath)
@@ -33,7 +33,7 @@ def create_badges(svgpath, csvpath, outpath, ncolumns):
         return
 
     # create the badge svg pages
-    replace_svg(aList, svgData, outpath, 'badges')
+    replace_svg(aList, svgData, outpath, 'badges', pdf)
 
     # create reverse side
     if ncolumns > 0:
@@ -62,7 +62,7 @@ def create_badges(svgpath, csvpath, outpath, ncolumns):
         replace_svg(rList, svgData, outpath, 'badges-rv')
 
 
-def replace_svg(aList, svgData, outpath, filename):
+def replace_svg(aList, svgData, outpath, filename, pdf):
 
     pageIdx = 0
     cPage = svgData
@@ -96,25 +96,23 @@ def replace_svg(aList, svgData, outpath, filename):
             # is the page full already?
             if nPage == cPage:
                 op = os.path.join(outpath, filename + "-" +
-                                  str(pageIdx) + ".svg")
+                                  str(pageIdx))
                 pageIdx += 1
 
-                save_svg(op, cPage)
+                save(cPage, op, pdf)
 
                 # get fresh svg & replace current string again
                 cPage = svgData
                 nPage = cPage.replace(kw, val, 1)
-
-                print(op + " saved...")
 
             cPage = nPage
 
     # save last page if it's still open
     if cPage != svgData:
         op = os.path.join(outpath, filename + "-" +
-                          str(pageIdx) + ".svg")
-        save_svg(op, cPage)
-        print(op + " saved...")
+                          str(pageIdx))
+
+        save(cPage, op, pdf)
 
 
 def check_keywords(svgData, keywords):
@@ -149,6 +147,7 @@ def read_csv(csvFile):
 
     return CsvData(reader[:1], reader[1:])
 
+
 def normalize(str):
 
     # replace illegal characters (XML)
@@ -169,17 +168,45 @@ def load_file(filepath):
     return None
 
 
+def save(content, dstpath: str, pdf: bool = False):
+
+    svgpath = dstpath + ".svg"
+
+    if save_svg(svgpath, content) and not pdf:
+        print(svgpath + " saved...")
+
+    if pdf:
+        pdfpath = dstpath + ".pdf"
+        if save_pdf(svgpath, pdfpath):
+            print(pdfpath + " saved...")
+
 def save_svg(filepath, svgData):
     import sys
 
     try:
-        outFile = open(filepath, 'w', encoding='utf-8')
-        outFile.write(svgData)
-        outFile.close()
+        with open(filepath, 'w', encoding='utf-8') as file:
+            file.write(svgData)
     except:
         print("Sorry, I could not save " + filepath)
         print(sys.exc_info()[0])
+        return False
 
+    return True
+
+def save_pdf(src: str, dst: str):
+    import sys
+    from svglib.svglib import svg2rlg
+    from reportlab.graphics import renderPDF
+
+    try:
+        graphics = svg2rlg(src)
+        renderPDF.drawToFile(graphics, dst)
+    except:
+        print("Sorry, I could not save " + dst)
+        print(sys.exc_info()[0])
+        return False
+
+    return True
 
 class CsvData(object):
     def __init__(self, keywords, data):
@@ -207,6 +234,9 @@ if __name__ == "__main__":
                         help="""specifies the number of columns,
                         if > 0, an svg for the reverse page is created too""")
 
+    parser.add_argument('--pdf', action="store_true",
+                        help="""if set, pdfs are created.""")
+
     # get args and make a dict from the namespace
     args = vars(parser.parse_args())
 
@@ -221,7 +251,7 @@ if __name__ == "__main__":
     #     sys.stdout = logFile
 
     # do the job
-    create_badges(args['svg'], args['csv'], args['savepath'], args['back'])
+    create_badges(args['svg'], args['csv'], args['savepath'], args['back'], args['pdf'])
 
     print("In order to succeed, we must first believe that we can.")
     print("\t - Nikos Kazantzakis")

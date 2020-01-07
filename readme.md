@@ -4,24 +4,30 @@ template using names from a ``*.csv`` file.
 
 ## Data Preparation
 - Create a (graphical) template similar to ``template.svg``
-- Create a attendee list similar to ``attendees.csv``
+- Create an attendee list similar to ``attendees.csv``
   - Name your column headers (1st row) w.r.t the template fields
   - Field names must start with # (e.g. ``#name``; ``#company``)
 - NOTE: all files _must_ be ``UTF-8`` encoded
-  - check them using notepad++ (e.g. Illustrator & Excel do not produce UTF-8
+  - check them using i.e. notepad++ (e.g. Illustrator & Excel do not produce UTF-8
     encoded files)
 
-## Running the
-- Install ``Python 3.4``
-- Open a command line and cd to the ``src``
-- Call the CBC
+## Running the CBC
+- Install ``Python 3``
+- Open a command line and cd to this folder, then:
 ```
-cbc.py ..\data\template.svg ..\data\attendees.csv ..\badges --back 3
+python src/cbc.py ./data/template.svg ./data/attendees.csv ./print
 ```
 
 ## Printing on Both Sides
 - Choose ``--back`` with the number of columns
 - When printing, choose ``Flip on Short Edge``
+
+## Create PDFs
+Adding the option `--pdf` outputs the badges as pdf. You need to add the svglib package:
+````bash
+pip install svglib 
+````
+NOTE: some fonts are not supported when converting to pdf.
 
 ## Using ACM's RegOnline
 - Export attendee list from ``RegOnline`` as ``xls``
